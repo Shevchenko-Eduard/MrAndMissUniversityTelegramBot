@@ -5,12 +5,11 @@ namespace MrAndMissUniversity.Keyboards;
 
 public class Keyboard
 {
-    public static readonly string registerText = "/reg";
     public static ReplyKeyboardMarkup Register()
     {
         return new ReplyKeyboardMarkup(new List<KeyboardButton>()
         {
-            new KeyboardButton(registerText),
+            new KeyboardButton("/register"),
         })
         {
             ResizeKeyboard = true,

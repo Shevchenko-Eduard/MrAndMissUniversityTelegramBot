@@ -1,19 +1,32 @@
 ﻿using Telegram.Bot;
-using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 using static System.Console;
+using MrAndMissUniversity.DbUtils;
+using Microsoft.EntityFrameworkCore;
 
 namespace MrAndMissUniversity;
 
 class Program
 {
+    public static string Token = "8362813400:AAEVyEL1jB3j_-Y0cWVs277jnx1OKtP4Gac";
     // Это клиент для работы с Telegram Bot API, который позволяет отправлять сообщения, управлять ботом, подписываться на обновления и многое другое.
-    private static ITelegramBotClient bot = new TelegramBotClient("8362813400:AAEVyEL1jB3j_-Y0cWVs277jnx1OKtP4Gac");
+    private static ITelegramBotClient bot = new TelegramBotClient(Token);
     static async Task Main()
     {
         WriteLine("Запущен бот " + bot.GetMe().Result.FirstName);
+        using (DataBase db = new())
+        {
+            try
+            {
+                await db.Database.MigrateAsync();
+            }
+            catch (InvalidOperationException ex)
+            {
+                WriteLine(ex);
+                WriteLine();
+                WriteLine("Попробуйте пересоздать миграцию базы данных.");
+            }
+        }
         CancellationTokenSource cts = new CancellationTokenSource();
         CancellationToken cancellationToken = cts.Token;
         ReceiverOptions receiverOptions = new ReceiverOptions

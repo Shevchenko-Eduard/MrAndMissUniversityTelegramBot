@@ -14,17 +14,18 @@ namespace MrAndMissUniversity.Migrations
                 name: "Students",
                 columns: table => new
                 {
-                    TelegramId = table.Column<int>(type: "INTEGER", nullable: false)
+                    TelegramId = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    FirstName = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    LastName = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    Patronymic = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    Year = table.Column<short>(type: "INTEGER", nullable: false),
-                    Group = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
-                    NameOfSpecialty = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    Photograph = table.Column<byte[]>(type: "BLOB", nullable: false),
+                    FirstName = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    LastName = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    Patronymic = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    Year = table.Column<short>(type: "INTEGER", nullable: true),
+                    Group = table.Column<string>(type: "TEXT", maxLength: 10, nullable: true),
+                    NameOfSpecialty = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    Photograph = table.Column<byte[]>(type: "BLOB", nullable: true),
                     BriefIntroduction = table.Column<string>(type: "TEXT", nullable: true),
-                    Reason = table.Column<string>(type: "TEXT", nullable: false)
+                    Reason = table.Column<string>(type: "TEXT", nullable: true),
+                    RegistrationStep = table.Column<short>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {

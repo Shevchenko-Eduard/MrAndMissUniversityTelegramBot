@@ -2,12 +2,12 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Newtonsoft.Json;
 using MrAndMissUniversity.Keyboards;
 using MrAndMissUniversity.DbUtils;
 using static System.Console;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using SixLabors.ImageSharp;
 
 namespace MrAndMissUniversity;
 
@@ -15,10 +15,15 @@ public static class Handler
 {
     static string pathToStartMessage = Path.Combine(Environment.CurrentDirectory, "StartMessage");
     static string startMessage = File.ReadAllText(pathToStartMessage);
+    static JsonSerializerOptions optionsJsonSerialize = new()
+    {
+        WriteIndented = true,  // Включаем красивое форматирование
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull  // Игнорируем null значения
+    };
 
     public static async Task<Task> ErrorHandlerAsync(ITelegramBotClient client, Exception exception, HandleErrorSource source, CancellationToken token)
     {
-        WriteLine(JsonConvert.SerializeObject(exception));
+        WriteLine(JsonSerializer.Serialize(exception, optionsJsonSerialize));
         return Task.CompletedTask;
     }
 
@@ -44,47 +49,132 @@ public static class Handler
                             return;
                         }
                         // Выводим на экран то, что пишут нашему боту, а также небольшую информацию об отправителе
-                        WriteLine(JsonConvert.SerializeObject(update));
+                        WriteLine(JsonSerializer.Serialize(update, optionsJsonSerialize));
                         // Chat - содержит всю информацию о чате
                         Chat chat = message.Chat;
                         switch (message.Type)
                         {
                             case MessageType.Text:
                                 {
-                                    if (message.Text == "/start")
+                                    switch (message.Text)
                                     {
-                                        Student? student = await DataBaseMethods.GetStudent(user.Id);
-                                        if (student is null)
-                                        {
-                                            await botClient.SendMessage(
-                                            chat.Id,
-                                            startMessage,
-                                            replyMarkup: Keyboard.Register());
-                                            return;
-                                        }
-                                        else
-                                        {
-                                            await botClient.SendMessage(
-                                            chat.Id,
-                                            "Вы уже заполнили анкету.",
-                                            replyMarkup: Keyboard.Register());
-                                        }
+                                        case "/start":
+                                            {
+                                                if (!await DataBaseMethods.ExistUser(user.Id))
+                                                {
+                                                    await DataBaseMethods.InitUser(user.Id);
+                                                    await botClient.SendMessage(
+                                                    chat.Id,
+                                                    startMessage,
+                                                    replyMarkup: Keyboard.Register());
+                                                    return;
+                                                }
+                                                else if (await DataBaseMethods.IsRegistrationComplete(user.Id))
+                                                {
+                                                    await botClient.SendMessage(
+                                                    chat.Id,
+                                                    "Вы уже заполнили анкету.");
+                                                    return;
+                                                }
+                                                else
+                                                {
+                                                    await botClient.SendMessage(
+                                                    chat.Id,
+                                                    startMessage,
+                                                    replyMarkup: Keyboard.Register());
+                                                    await botClient.SendMessage(
+                                                    chat.Id,
+                                                    "Продолжите регистрацию.",
+                                                    replyMarkup: Keyboard.Register());
+                                                    return;
+                                                }
+                                            }
+                                        case "/register":
+                                            {
+                                                await Registration.Step0.Next(botClient, chat, message);
+                                                return;
+                                            }
+                                        default:
+                                            {
+                                                short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
+                                                if (!string.IsNullOrEmpty(message.Text))
+                                                {
+                                                    switch (RegistrationStep)
+                                                    {
+                                                        case 1:
+                                                            {
+                                                                await Registration.Step1.Next(botClient, chat, user, message);
+                                                                return;
+                                                            }
+                                                        case 2:
+                                                            {
+                                                                await Registration.Step2.Next(botClient, chat, user, message);
+                                                                return;
+                                                            }
+                                                        case 3:
+                                                            {
+                                                                await Registration.Step3.Next(botClient, chat, user, message);
+                                                                return;
+                                                            }
+                                                        case 4:
+                                                            {
+                                                                await botClient.SendMessage(
+                                                                    chat.Id,
+                                                                    "Отправьте фотографию.");
+                                                                return;
+                                                            }
+                                                    }
+                                                }
+                                                return;
+                                            }
                                     }
-                                    if (message.Text == Keyboard.registerText)
-                                    {
-                                        
-                                    }
-                                    return;
                                 }
-                            // Добавил default , чтобы показать вам разницу типов Message
-                            default:
+                            case MessageType.Photo:
                                 {
-                                    await botClient.SendMessage(
-                                        chat.Id,
-                                        "Используй только текст!");
+                                    if (message.Photo is null)
+                                    {
+                                        return;
+                                    }
+                                    PhotoSize? photo = message.Photo.LastOrDefault(); // Берем самое крупное
+                                    if (photo is null)
+                                    {
+                                        return;
+                                    }
+                                    string fileId = photo.FileId;
+                                    TGFile fileInfo = await botClient.GetFile(fileId);
+                                    string? filePath = fileInfo.FilePath;
+                                    if (filePath is null)
+                                    {
+                                        return;
+                                    }
+                                    string url = $"https://api.telegram.org/file/bot{Program.Token}/{filePath}";
+                                    short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
+                                    Byte[]? jpegImageBytes;
+                                    // Скачиваем файл
+                                    using (HttpClient httpClient = new())
+                                    {
+                                        Byte[] imageBytes = await httpClient.GetByteArrayAsync(url);
+                                        // imageBytes содержит байты изображения
+                                        using (Image image = Image.Load(imageBytes))
+                                        {
+                                            // Сохраняем в память (Stream)
+                                            using (MemoryStream ms = new())
+                                            {
+                                                await image.SaveAsync(ms, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder());
+                                                ms.Position = 0; // Сбрасываем позицию для чтения
+                                                                 // Отправляем обратно пользователю
+                                                jpegImageBytes = ms.ToArray();
+                                            }
+                                        }
+                                    }
+                                    if (RegistrationStep == 4)
+                                    {
+                                        await Registration.Step4.Next(botClient, chat, user, photo, jpegImageBytes);
+                                    }
                                     return;
                                 }
                         }
+                        return;
                     }
                 case UpdateType.CallbackQuery:
                     {

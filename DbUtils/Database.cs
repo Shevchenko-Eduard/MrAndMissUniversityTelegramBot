@@ -2,14 +2,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MrAndMissUniversity.DbUtils;
 
-public class Database: DbContext
+public class DataBase: DbContext
 {
+    public static string DataBaseName = "Students.db";
+
+    public static string pathToDataBase = Path.Combine(
+                Environment.CurrentDirectory, DataBaseName);
     public DbSet<Student> Students { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        string DatabaseName = "Students.db";
-        string path = Path.Combine(
-                Environment.CurrentDirectory, DatabaseName);
-        optionsBuilder.UseSqlite($"Filename={path}");
+        optionsBuilder.UseSqlite($"Filename={pathToDataBase}");
     }
 }

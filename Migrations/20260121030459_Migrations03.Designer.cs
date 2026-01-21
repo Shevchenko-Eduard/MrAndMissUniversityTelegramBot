@@ -9,9 +9,9 @@ using MrAndMissUniversity.DbUtils;
 
 namespace MrAndMissUniversity.Migrations
 {
-    [DbContext(typeof(Database))]
-    [Migration("20260120204320_InitialCreate")]
-    partial class InitialCreate
+    [DbContext(typeof(DataBase))]
+    [Migration("20260121030459_Migrations03")]
+    partial class Migrations03
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -21,7 +21,7 @@ namespace MrAndMissUniversity.Migrations
 
             modelBuilder.Entity("MrAndMissUniversity.DbUtils.Student", b =>
                 {
-                    b.Property<int>("TelegramId")
+                    b.Property<long>("TelegramId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -29,39 +29,35 @@ namespace MrAndMissUniversity.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(20)
+                        .HasMaxLength(40)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Group")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(20)
+                        .HasMaxLength(40)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("NameOfSpecialty")
-                        .IsRequired()
-                        .HasMaxLength(20)
+                        .HasMaxLength(60)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Patronymic")
-                        .IsRequired()
-                        .HasMaxLength(20)
+                        .HasMaxLength(40)
                         .HasColumnType("TEXT");
 
                     b.Property<byte[]>("Photograph")
-                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<string>("Reason")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<short>("Year")
+                    b.Property<short>("RegistrationStep")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<short?>("Year")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("TelegramId");
