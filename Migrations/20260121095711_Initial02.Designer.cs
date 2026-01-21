@@ -10,8 +10,8 @@ using MrAndMissUniversity.DbUtils;
 namespace MrAndMissUniversity.Migrations
 {
     [DbContext(typeof(DataBase))]
-    [Migration("20260121043158_Migrations04")]
-    partial class Migrations04
+    [Migration("20260121095711_Initial02")]
+    partial class Initial02
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -46,10 +46,6 @@ namespace MrAndMissUniversity.Migrations
 
                     b.Property<string>("Patronymic")
                         .HasMaxLength(40)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PhotoExtension")
-                        .HasMaxLength(10)
                         .HasColumnType("TEXT");
 
                     b.Property<byte[]>("Photograph")

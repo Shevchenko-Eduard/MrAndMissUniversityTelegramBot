@@ -196,5 +196,37 @@ namespace MrAndMissUniversity.DbUtils
                 return student.Photograph;
             }
         }
+        public static async Task UpdateBriefIntroduction(
+            long Id, string briefIntroduction)
+        {
+            using (DataBase db = new())
+            {
+                Student? student = await db.Students
+                    .FirstOrDefaultAsync(s => s.TelegramId == Id);
+                if (student is null)
+                {
+                    throw new Exception();
+                }
+                student.BriefIntroduction = briefIntroduction;
+                db.Students.Update(student);
+                await db.SaveChangesAsync();
+            }
+        }
+        public static async Task UpdateReason(
+            long Id, string reason)
+        {
+            using (DataBase db = new())
+            {
+                Student? student = await db.Students
+                    .FirstOrDefaultAsync(s => s.TelegramId == Id);
+                if (student is null)
+                {
+                    throw new Exception();
+                }
+                student.Reason = reason;
+                db.Students.Update(student);
+                await db.SaveChangesAsync();
+            }
+        }
     }
 }

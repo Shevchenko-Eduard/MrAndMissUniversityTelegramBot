@@ -31,6 +31,8 @@ public static class Handler
     {
         try
         {
+            // Выводим на экран то, что пишут нашему боту, а также небольшую информацию об отправителе
+            WriteLine(JsonSerializer.Serialize(update, optionsJsonSerialize));
             // Сразу же ставим конструкцию switch, чтобы обрабатывать приходящие Update
             switch (update.Type)
             {
@@ -48,8 +50,6 @@ public static class Handler
                         {
                             return;
                         }
-                        // Выводим на экран то, что пишут нашему боту, а также небольшую информацию об отправителе
-                        WriteLine(JsonSerializer.Serialize(update, optionsJsonSerialize));
                         // Chat - содержит всю информацию о чате
                         Chat chat = message.Chat;
                         switch (message.Type)
@@ -66,7 +66,7 @@ public static class Handler
                                                     await botClient.SendMessage(
                                                     chat.Id,
                                                     startMessage,
-                                                    replyMarkup: Keyboard.Register());
+                                                    replyMarkup: Keyboard.Register);
                                                     return;
                                                 }
                                                 else if (await DataBaseMethods.IsRegistrationComplete(user.Id))
@@ -81,17 +81,14 @@ public static class Handler
                                                     await botClient.SendMessage(
                                                     chat.Id,
                                                     startMessage,
-                                                    replyMarkup: Keyboard.Register());
-                                                    await botClient.SendMessage(
-                                                    chat.Id,
-                                                    "Продолжите регистрацию.",
-                                                    replyMarkup: Keyboard.Register());
+                                                    replyMarkup: Keyboard.Register);
+                                                    await Registration.RegistrationContinua(botClient, chat, user);
                                                     return;
                                                 }
                                             }
                                         case "/register":
                                             {
-                                                await Registration.Step0.Next(botClient, chat, message);
+                                                await Registration.Step0.Done(botClient, chat, user);
                                                 return;
                                             }
                                         default:
@@ -99,31 +96,8 @@ public static class Handler
                                                 short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
                                                 if (!string.IsNullOrEmpty(message.Text))
                                                 {
-                                                    switch (RegistrationStep)
-                                                    {
-                                                        case 1:
-                                                            {
-                                                                await Registration.Step1.Next(botClient, chat, user, message);
-                                                                return;
-                                                            }
-                                                        case 2:
-                                                            {
-                                                                await Registration.Step2.Next(botClient, chat, user, message);
-                                                                return;
-                                                            }
-                                                        case 3:
-                                                            {
-                                                                await Registration.Step3.Next(botClient, chat, user, message);
-                                                                return;
-                                                            }
-                                                        case 4:
-                                                            {
-                                                                await botClient.SendMessage(
-                                                                    chat.Id,
-                                                                    "Отправьте фотографию.");
-                                                                return;
-                                                            }
-                                                    }
+                                                    await Registration.RegistrationProcess(
+                                                        RegistrationStep, botClient, chat, user, message);
                                                 }
                                                 return;
                                             }
@@ -148,8 +122,7 @@ public static class Handler
                                         return;
                                     }
                                     string url = $"https://api.telegram.org/file/bot{Program.Token}/{filePath}";
-                                    short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
-                                    Byte[]? jpegImageBytes;
+                                    Byte[] jpegImageBytes;
                                     // Скачиваем файл
                                     using (HttpClient httpClient = new())
                                     {
@@ -167,9 +140,10 @@ public static class Handler
                                             }
                                         }
                                     }
+                                    short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
                                     if (RegistrationStep == 4)
                                     {
-                                        await Registration.Step4.Next(botClient, chat, user, photo, jpegImageBytes);
+                                        await Registration.Step4.Done(botClient, chat, user, photo, jpegImageBytes);
                                     }
                                     return;
                                 }
@@ -178,6 +152,37 @@ public static class Handler
                     }
                 case UpdateType.CallbackQuery:
                     {
+                        CallbackQuery? callbackQuery = update.CallbackQuery;
+                        if (callbackQuery is null)
+                        {
+                            return;
+                        }
+                        User? user = callbackQuery.From;
+                        if (user is null)
+                        {
+                            return;
+                        }
+                        switch (callbackQuery.Data)
+                        {
+                            case "/yes":
+                                {
+                                    short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
+                                    if (RegistrationStep == 5)
+                                    {
+                                        await Registration.Step5.Done(botClient, user.Id, user.Id);
+                                    }
+                                    return;
+                                }
+                            case "/no":
+                                {
+                                    short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
+                                    if (RegistrationStep == 5)
+                                    {
+                                        await Registration.Step6.Skip(botClient, user.Id, user.Id);
+                                    }
+                                    return;
+                                }
+                        }
                         return;
                     }
             }

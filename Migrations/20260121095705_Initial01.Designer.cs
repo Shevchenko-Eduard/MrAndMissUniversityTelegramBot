@@ -10,8 +10,8 @@ using MrAndMissUniversity.DbUtils;
 namespace MrAndMissUniversity.Migrations
 {
     [DbContext(typeof(DataBase))]
-    [Migration("20260121064620_Migrations05")]
-    partial class Migrations05
+    [Migration("20260121095705_Initial01")]
+    partial class Initial01
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

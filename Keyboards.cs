@@ -3,16 +3,22 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MrAndMissUniversity.Keyboards;
 
-public class Keyboard
+public static class Keyboard
 {
-    public static ReplyKeyboardMarkup Register()
-    {
-        return new ReplyKeyboardMarkup(new List<KeyboardButton>()
+    public static ReplyKeyboardMarkup Register =
+    new ReplyKeyboardMarkup(new List<KeyboardButton>()
         {
             new KeyboardButton("/register"),
         })
+    {
+        ResizeKeyboard = true,
+    };
+    public static InlineKeyboardMarkup DichotomousSurvey = new(new[]
         {
-            ResizeKeyboard = true,
-        };
-    }
-} 
+            new []
+            {
+                InlineKeyboardButton.WithCallbackData(text: "Да", callbackData: "/yes"),
+                InlineKeyboardButton.WithCallbackData(text: "Нет", callbackData: "/no"),
+            },
+        });
+}
