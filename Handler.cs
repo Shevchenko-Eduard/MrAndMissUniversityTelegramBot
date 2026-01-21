@@ -122,28 +122,17 @@ public static class Handler
                                         return;
                                     }
                                     string url = $"https://api.telegram.org/file/bot{Program.Token}/{filePath}";
-                                    Byte[] jpegImageBytes;
+                                    Byte[] imageBytes;
                                     // Скачиваем файл
                                     using (HttpClient httpClient = new())
                                     {
-                                        Byte[] imageBytes = await httpClient.GetByteArrayAsync(url);
+                                        imageBytes = await httpClient.GetByteArrayAsync(url);
                                         // imageBytes содержит байты изображения
-                                        using (Image image = Image.Load(imageBytes))
-                                        {
-                                            // Сохраняем в память (Stream)
-                                            using (MemoryStream ms = new())
-                                            {
-                                                await image.SaveAsync(ms, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder());
-                                                ms.Position = 0; // Сбрасываем позицию для чтения
-                                                                 // Отправляем обратно пользователю
-                                                jpegImageBytes = ms.ToArray();
-                                            }
-                                        }
                                     }
                                     short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
                                     if (RegistrationStep == 4)
                                     {
-                                        await Registration.Step4.Done(botClient, chat, user, photo, jpegImageBytes);
+                                        await Registration.Step4.Done(botClient, chat, user, photo, imageBytes);
                                     }
                                     return;
                                 }

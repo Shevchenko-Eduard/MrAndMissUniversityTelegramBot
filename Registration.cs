@@ -252,11 +252,11 @@ public class Registration
                 replyMarkup: Keyboard.DichotomousSurvey);
         }
         public static async Task Done(
-            ITelegramBotClient botClient, Chat chat, User user, PhotoSize photo, Byte[] jpegImageBytes)
+            ITelegramBotClient botClient, Chat chat, User user, PhotoSize photo, Byte[] imageBytes)
         {
             if (photo.Height >= 1270 && photo.Width >= 950)
             {
-                await DataBaseMethods.UpdatePhotograph(user.Id, jpegImageBytes);
+                await DataBaseMethods.UpdatePhotograph(user.Id, imageBytes);
                 await DataBaseMethods.UpdateRegistrationStep(user.Id, 5);
                 await Message(botClient, chat);
                 return;
