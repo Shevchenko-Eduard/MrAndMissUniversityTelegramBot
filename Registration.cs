@@ -449,15 +449,16 @@ public static class Registration
             return;
         }
         public static async Task Skip(
-            ITelegramBotClient botClient, Chat chat, User user)
+            ITelegramBotClient botClient, Chat chat, User user, Message message)
         {
-            await Skip(botClient, chat.Id, user.Id);
+            await Skip(botClient, chat.Id, user.Id, message);
         }
         public static async Task Skip(
-            ITelegramBotClient botClient, long chatId, long userId)
+            ITelegramBotClient botClient, long chatId, long userId, Message message)
         {
             await Message(botClient, chatId);
             await DataBaseMethods.UpdateRegistrationStep(userId, 7);
+            await DataBaseMethods.UpdateDeleteMessage(userId, message.Id + 1);
         }
     }
     public static class Step7

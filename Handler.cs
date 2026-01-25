@@ -228,7 +228,7 @@ public static class Handler
                                     short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
                                     if (RegistrationStep == 5)
                                     {
-                                        await Registration.Step6.Skip(botClient, chat.Id, user.Id);
+                                        await Registration.Step6.Skip(botClient, chat.Id, user.Id, message);
                                     }
                                     await botClient.DeleteMessage(chat.Id, message.Id);
                                     return;
