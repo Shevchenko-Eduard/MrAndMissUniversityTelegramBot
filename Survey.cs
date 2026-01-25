@@ -8,6 +8,7 @@ namespace MrAndMissUniversityTelegramBot;
 
 public static class Survey
 {
+    
     public static async Task SendMessage(ITelegramBotClient botClient, Chat chat, User user)
     {
         await SendMessage(botClient, chat.Id, user.Id);
@@ -15,13 +16,12 @@ public static class Survey
     public static async Task SendMessage(ITelegramBotClient botClient, long chatId, long userId)
     {
         Student? student = await DataBaseMethods.GetUser(userId);
-        if (student is null)
+        if (student is null || student.Photograph is null)
         {
             return;
         }
         string survey = await Handler.ReadAllFile("Survey");
-        using (Stream stream = new MemoryStream(
-            await DataBaseMethods.GetPhotograph(userId)))
+        using (Stream stream = new MemoryStream(student.Photograph))
         {
             await botClient.SendPhoto(
             chatId: chatId,
@@ -42,7 +42,7 @@ public static class Survey
     }
     public static async Task EditProcess(
         ITelegramBotClient botClient, long chatId, long userId, short editColumn,
-        Message? message = null, PhotoSize? photo = null, Byte[]? imageBytes = null)
+        Message? message, PhotoSize? photo = null, Byte[]? imageBytes = null)
     {
         if (await DataBaseMethods.IsRegistrationComplete(userId))
         {
@@ -187,8 +187,11 @@ public static class Survey
         }
         else
         {
-            await Registration.RegistrationContinua(botClient, chatId: chatId, step:
-                await DataBaseMethods.GetRegistrationStep(Id: userId));
+            if (message is not null)
+            {
+                await Registration.RegistrationContinua(botClient, chatId: chatId, step:
+                    await DataBaseMethods.GetRegistrationStep(Id: userId), message);
+            }
         }
     }
 }

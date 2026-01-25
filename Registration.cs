@@ -2,12 +2,15 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using MrAndMissUniversity.DbUtils;
 using MrAndMissUniversity.Keyboards;
+using System.Runtime.CompilerServices;
+using MrAndMissUniversityTelegramBot;
 
 namespace MrAndMissUniversity;
 
 public static class Registration
 {
     public static readonly string textPleaseTryAgain = "🔄 Что-то пошло не так. Попробуйте ещё раз.";
+    public static readonly string textRegistrationContinua = "➡️ Продолжите регистрацию.\n";
     public static async Task PleaseTryAgain(ITelegramBotClient botClient, Chat chat)
     {
         await PleaseTryAgain(botClient: botClient, chat: chat);
@@ -25,7 +28,7 @@ public static class Registration
         {
             case 1:
                 {
-                    if(message is not null)
+                    if (message is not null)
                     {
                         await Step1.Done(botClient, chatId, userId, message);
                     }
@@ -33,7 +36,7 @@ public static class Registration
                 }
             case 2:
                 {
-                    if(message is not null)
+                    if (message is not null)
                     {
                         await Step2.Done(botClient, chatId, userId, message);
                     }
@@ -41,7 +44,7 @@ public static class Registration
                 }
             case 3:
                 {
-                    if(message is not null)
+                    if (message is not null)
                     {
                         await Step3.Done(botClient, chatId, userId, message);
                     }
@@ -49,22 +52,22 @@ public static class Registration
                 }
             case 4:
                 {
-                    if(photo is not null && imageBytes is not null)
+                    if (photo is not null && imageBytes is not null && message is not null)
                     {
-                        await Step4.Done(botClient, chatId, userId, photo, imageBytes);
+                        await Step4.Done(botClient, chatId, userId, photo, imageBytes, message);
                     }
                     else
                     {
                         await botClient.SendMessage(
                         chatId,
-                        "📷 Пожалуйста, отправьте фотографию для завершения шага."); 
+                        "📷 Пожалуйста, отправьте фотографию для завершения шага.");
                         // пользователь отправил текстовое сообщение вместо фото
                     }
                     return;
                 }
             case 6:
                 {
-                    if(message is not null)
+                    if (message is not null)
                     {
                         await Step6.Done(botClient, chatId, userId, message);
                     }
@@ -72,7 +75,7 @@ public static class Registration
                 }
             case 7:
                 {
-                    if(message is not null)
+                    if (message is not null)
                     {
                         await Step7.Done(botClient, chatId, userId, message);
                     }
@@ -85,60 +88,55 @@ public static class Registration
         }
     }
     public static async Task RegistrationContinua(
-        ITelegramBotClient botClient, Chat chat, short step)
-    {
-        await RegistrationContinua(botClient, chat.Id, step);
-    }
-    public static async Task RegistrationContinua(
-        ITelegramBotClient botClient, long chatId, short step)
+        ITelegramBotClient botClient, long chatId, short step, Message message)
     {
         switch (step)
         {
             case 0:
                 {
-                    await Step0.Done(botClient, chatId, chatId);
+                    await Step0.Done(botClient, chatId, chatId, message);
                     return;
                 }
             case 1:
                 {
-                    await MessageRegistrationContinua();
-                    await Step0.Message(botClient, chatId);
+                    await MessageRegistrationContinua(Step0.text);
+                    await DataBaseMethods.UpdateDeleteMessage(chatId, message.Id + 1);
                     return;
                 }
             case 2:
                 {
-                    await MessageRegistrationContinua();
-                    await Step1.Message(botClient, chatId);
+                    await MessageRegistrationContinua(Step1.text);
+                    await DataBaseMethods.UpdateDeleteMessage(chatId, message.Id + 1);
                     return;
                 }
             case 3:
                 {
-                    await MessageRegistrationContinua();
-                    await Step2.Message(botClient, chatId);
+                    await MessageRegistrationContinua(Step2.text);
+                    await DataBaseMethods.UpdateDeleteMessage(chatId, message.Id + 1);
                     return;
                 }
             case 4:
                 {
-                    await MessageRegistrationContinua();
-                    await Step3.Message(botClient, chatId);
+                    await MessageRegistrationContinua(Step3.text);
+                    await DataBaseMethods.UpdateDeleteMessage(chatId, message.Id + 1);
                     return;
                 }
             case 5:
                 {
-                    await MessageRegistrationContinua();
-                    await Step4.Message(botClient, chatId);
+                    await Step4.Message(botClient, chatId, textRegistrationContinua + Step4.text);
+                    await DataBaseMethods.UpdateDeleteMessage(chatId, message.Id + 1);
                     return;
                 }
             case 6:
                 {
-                    await MessageRegistrationContinua();
-                    await Step5.Message(botClient, chatId);
+                    await MessageRegistrationContinua(Step5.text);
+                    await DataBaseMethods.UpdateDeleteMessage(chatId, message.Id + 1);
                     return;
                 }
             case 7:
                 {
-                    await MessageRegistrationContinua();
-                    await Step6.Message(botClient, chatId);
+                    await MessageRegistrationContinua(Step6.text);
+                    await DataBaseMethods.UpdateDeleteMessage(chatId, message.Id + 1);
                     return;
                 }
             case -1:
@@ -150,19 +148,19 @@ public static class Registration
                     throw new Exception();
                 }
         }
-        async Task MessageRegistrationContinua()
+        async Task MessageRegistrationContinua(string text)
         {
             await botClient.SendMessage(
                 chatId,
-                "➡️ Продолжите регистрацию.");
+                textRegistrationContinua + text);
         }
     }
     public static async Task RegistrationContinua(
-        ITelegramBotClient botClient, Chat chat, User user)
+        ITelegramBotClient botClient, Chat chat, User user, Message message)
     {
 
-        await RegistrationContinua(botClient, chat,
-            await DataBaseMethods.GetRegistrationStep(user.Id));
+        await RegistrationContinua(botClient, chat.Id,
+            await DataBaseMethods.GetRegistrationStep(user.Id), message);
     }
 
     public static class Step0
@@ -182,22 +180,23 @@ public static class Registration
                 text);
         }
         public static async Task Done(
-            ITelegramBotClient botClient, Chat chat, User user)
+            ITelegramBotClient botClient, Chat chat, User user, Message message)
         {
-            await Done(botClient, chat, user);
+            await Done(botClient, chat, user, message);
         }
         public static async Task Done(
-            ITelegramBotClient botClient, long chatId, long userId)
+            ITelegramBotClient botClient, long chatId, long userId, Message message)
         {
             short step = await DataBaseMethods.GetRegistrationStep(userId);
             if (step == 0)
             {
                 await DataBaseMethods.UpdateRegistrationStep(chatId, 1);
                 await Message(botClient, chatId);
+                await DataBaseMethods.UpdateDeleteMessage(userId, message.Id + 1);
             }
             else
             {
-                await RegistrationContinua(botClient, chatId, step);
+                await RegistrationContinua(botClient, chatId, step, message);
             }
         }
     }
@@ -236,10 +235,14 @@ public static class Registration
                     patronymic: arrayFullName[2]);
                 await DataBaseMethods.UpdateRegistrationStep(userId, 2);
                 await Message(botClient, chatId);
+                await botClient.DeleteMessages(chatId, [await DataBaseMethods.GetDeleteMessage(userId), message.Id]);
+                await DataBaseMethods.UpdateDeleteMessage(userId, message.Id + 1);
                 return;
             }
-            await PleaseTryAgain(botClient, chatId);
-            await Step0.Message(botClient, chatId);
+            await botClient.DeleteMessage(chatId, message.Id);
+            await botClient.EditMessageText(chatId, 
+                await DataBaseMethods.GetDeleteMessage(userId),
+                Step0.text + " " + textPleaseTryAgain);
             return;
         }
     }
@@ -277,10 +280,14 @@ public static class Registration
                     group: arrayYearAndGroup[1]);
                 await DataBaseMethods.UpdateRegistrationStep(userId, 3);
                 await Message(botClient, chatId);
+                await botClient.DeleteMessages(chatId, [await DataBaseMethods.GetDeleteMessage(userId), message.Id]);
+                await DataBaseMethods.UpdateDeleteMessage(userId, message.Id + 1);
                 return;
             }
-            await PleaseTryAgain(botClient, chatId);
-            await Step1.Message(botClient, chatId);
+            await botClient.DeleteMessage(chatId, message.Id);
+            await botClient.EditMessageText(chatId, 
+                await DataBaseMethods.GetDeleteMessage(userId),
+                Step1.text + " " + textPleaseTryAgain);
             return;
         }
     }
@@ -316,10 +323,14 @@ public static class Registration
                     nameOfSpecialty: message.Text);
                 await DataBaseMethods.UpdateRegistrationStep(userId, 4);
                 await Message(botClient, chatId);
+                await botClient.DeleteMessages(chatId, [await DataBaseMethods.GetDeleteMessage(userId), message.Id]);
+                await DataBaseMethods.UpdateDeleteMessage(userId, message.Id + 1);
                 return;
             }
-            await PleaseTryAgain(botClient, chatId);
-            await Step2.Message(botClient, chatId);
+            await botClient.DeleteMessage(chatId, message.Id);
+            await botClient.EditMessageText(chatId, 
+                await DataBaseMethods.GetDeleteMessage(userId),
+                Step2.text + " " + textPleaseTryAgain);
             return;
         }
     }
@@ -328,36 +339,39 @@ public static class Registration
         public static readonly string text = "ℹ️ Вы можете рассказать немного о себе?";
         public static readonly short NumStep = 4;
         public static async Task Message(
-            ITelegramBotClient botClient, Chat chat)
+            ITelegramBotClient botClient, Chat chat, string str)
         {
-            await Message(botClient, chat.Id);
+            await Message(botClient, chat.Id, str);
         }
         public static async Task Message(
-            ITelegramBotClient botClient, long chatId)
+            ITelegramBotClient botClient, long chatId, string str)
         {
             await botClient.SendMessage(
                 chatId,
-                text,
+                str,
                 replyMarkup: Keyboard.DichotomousSurvey);
         }
         public static async Task Done(
-            ITelegramBotClient botClient, Chat chat, User user, PhotoSize photo, Byte[] imageBytes)
+            ITelegramBotClient botClient, Chat chat, User user, PhotoSize photo, Byte[] imageBytes, Message message)
         {
-            await Done(botClient: botClient, chatId: chat.Id, userId: user.Id, photo: photo, imageBytes: imageBytes);
+            await Done(botClient: botClient, chatId: chat.Id, userId: user.Id, photo: photo, imageBytes: imageBytes, message: message);
             return;
         }
         public static async Task Done(
-            ITelegramBotClient botClient, long chatId, long userId, PhotoSize photo, Byte[] imageBytes)
+            ITelegramBotClient botClient, long chatId, long userId, PhotoSize photo, Byte[] imageBytes, Message message)
         {
             if (photo.Height >= 1270 && photo.Width >= 950)
             {
                 await DataBaseMethods.UpdatePhotograph(userId, imageBytes);
                 await DataBaseMethods.UpdateRegistrationStep(userId, 5);
-                await Message(botClient, chatId);
+                await Message(botClient, chatId, text);
+                await botClient.DeleteMessages(chatId, [await DataBaseMethods.GetDeleteMessage(userId), message.Id]);
                 return;
             }
-            await PleaseTryAgain(botClient, chatId);
-            await Step3.Message(botClient, chatId);
+            await botClient.DeleteMessage(chatId, message.Id);
+            await botClient.EditMessageText(chatId, 
+                await DataBaseMethods.GetDeleteMessage(userId),
+                Step3.text + " " + textPleaseTryAgain);
             return;
         }
     }
@@ -378,15 +392,16 @@ public static class Registration
                 text);
         }
         public static async Task Done(
-            ITelegramBotClient botClient, Chat chat, User user)
+            ITelegramBotClient botClient, Chat chat, User user, Message message)
         {
-            await Done(botClient, chat.Id, user.Id);
+            await Done(botClient, chat.Id, user.Id, message);
         }
         public static async Task Done(
-            ITelegramBotClient botClient, long chatId, long userId)
+            ITelegramBotClient botClient, long chatId, long userId, Message message)
         {
             await Message(botClient, chatId);
             await DataBaseMethods.UpdateRegistrationStep(userId, 6);
+            await DataBaseMethods.UpdateDeleteMessage(userId, message.Id + 1);
         }
     }
     public static class Step6
@@ -423,10 +438,14 @@ public static class Registration
                 await DataBaseMethods.UpdateBriefIntroduction(userId, message.Text);
                 await DataBaseMethods.UpdateRegistrationStep(userId, 7);
                 await Message(botClient, chatId);
+                await botClient.DeleteMessages(chatId, [await DataBaseMethods.GetDeleteMessage(userId), message.Id]);
+                await DataBaseMethods.UpdateDeleteMessage(userId, message.Id + 1);
                 return;
             }
-            await PleaseTryAgain(botClient, chatId);
-            await Step5.Message(botClient, chatId);
+            await botClient.DeleteMessage(chatId, message.Id);
+            await botClient.EditMessageText(chatId, 
+                await DataBaseMethods.GetDeleteMessage(userId),
+                Step5.text + " " + textPleaseTryAgain);
             return;
         }
         public static async Task Skip(
@@ -443,19 +462,16 @@ public static class Registration
     }
     public static class Step7
     {
-        public static readonly string text = "✅ Ваши данные успешно сохранены.";
         public static readonly short NumStep = 6;
         public static async Task Message(
-            ITelegramBotClient botClient, Chat chat)
+            ITelegramBotClient botClient, Chat chat, User user)
         {
-            await Message(botClient: botClient, chatId: chat.Id);
+            await Message(botClient: botClient, chatId: chat.Id, userId: user.Id);
         }
         public static async Task Message(
-            ITelegramBotClient botClient, long chatId)
+            ITelegramBotClient botClient, long chatId, long userId)
         {
-            await botClient.SendMessage(
-                chatId,
-                text);
+            await Survey.SendMessage(botClient, chatId, userId);
         }
         public static async Task Done(
             ITelegramBotClient botClient, Chat chat, User user, Message message)
@@ -474,11 +490,14 @@ public static class Registration
             {
                 await DataBaseMethods.UpdateReason(userId, message.Text);
                 await DataBaseMethods.UpdateRegistrationStep(userId, -1);
-                await Message(botClient, chatId);
+                await Message(botClient, chatId, userId);
+                await botClient.DeleteMessages(chatId, [await DataBaseMethods.GetDeleteMessage(userId), message.Id]);
                 return;
             }
-            await PleaseTryAgain(botClient, chatId);
-            await Step6.Message(botClient, chatId);
+            await botClient.DeleteMessage(chatId, message.Id);
+            await botClient.EditMessageText(chatId, 
+                await DataBaseMethods.GetDeleteMessage(userId),
+                Step6.text + " " + textPleaseTryAgain);
             return;
         }
     }

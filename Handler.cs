@@ -103,7 +103,7 @@ public static class Handler
                                                     // chat.Id,
                                                     // await startMessage,
                                                     // replyMarkup: Keyboard.Register);
-                                                    await Registration.RegistrationContinua(botClient, chat, user);
+                                                    await Registration.RegistrationContinua(botClient, chat, user, message);
                                                     await botClient.DeleteMessage(chat.Id, message.Id);
                                                     return;
                                                 }
@@ -163,7 +163,7 @@ public static class Handler
                                         // imageBytes содержит байты изображения
                                     }
 
-                                    if (student.RegistrationStep == 4)
+                                    if (student.RegistrationStep != -1)
                                     {
                                         await Registration.RegistrationProcess(
                                             RegistrationStep: student.RegistrationStep,
@@ -218,7 +218,7 @@ public static class Handler
                                     short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
                                     if (RegistrationStep == 5)
                                     {
-                                        await Registration.Step5.Done(botClient, chat.Id, user.Id);
+                                        await Registration.Step5.Done(botClient, chat.Id, user.Id, message);
                                     }
                                     await botClient.DeleteMessage(chat.Id, message.Id);
                                     return;
@@ -235,7 +235,7 @@ public static class Handler
                                 }
                             case "/register":
                                 {
-                                    await Registration.Step0.Done(botClient, chat.Id, user.Id);
+                                    await Registration.Step0.Done(botClient, chat.Id, user.Id, message);
                                     await botClient.DeleteMessage(chat.Id, message.Id);
                                     return;
                                 }

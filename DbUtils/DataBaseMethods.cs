@@ -16,6 +16,9 @@ namespace MrAndMissUniversity.DbUtils
                 Student student = new()
                 {
                     TelegramId = Id,
+                    EditColumn = -1,
+                    StartDeleteMessage = 1,
+                    RegistrationStep = 0,
                 };
                 await db.Students.AddAsync(student);
                 await db.SaveChangesAsync();
