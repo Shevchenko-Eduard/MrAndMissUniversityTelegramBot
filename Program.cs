@@ -10,7 +10,7 @@ namespace MrAndMissUniversity;
 
 class Program
 {
-    public static string Token = "8362813400:AAEVyEL1jB3j_-Y0cWVs277jnx1OKtP4Gac";
+    public static string Token = "<YourToken>";
     // Это клиент для работы с Telegram Bot API, который позволяет отправлять сообщения, управлять ботом, подписываться на обновления и многое другое.
     private static ITelegramBotClient bot = new TelegramBotClient(Token);
     static async Task Main()
