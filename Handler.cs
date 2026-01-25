@@ -7,7 +7,6 @@ using MrAndMissUniversity.DbUtils;
 using static System.Console;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SixLabors.ImageSharp;
 
 namespace MrAndMissUniversity;
 
@@ -85,11 +84,6 @@ public static class Handler
                                                     await Registration.RegistrationContinua(botClient, chat, user);
                                                     return;
                                                 }
-                                            }
-                                        case "/register":
-                                            {
-                                                await Registration.Step0.Done(botClient, chat, user);
-                                                return;
                                             }
                                         default:
                                             {
@@ -169,6 +163,11 @@ public static class Handler
                                     {
                                         await Registration.Step6.Skip(botClient, user.Id, user.Id);
                                     }
+                                    return;
+                                }
+                            case "/register":
+                                {
+                                    await Registration.Step0.Done(botClient, user.Id, user.Id);
                                     return;
                                 }
                         }

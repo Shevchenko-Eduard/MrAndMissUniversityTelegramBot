@@ -5,14 +5,13 @@ namespace MrAndMissUniversity.Keyboards;
 
 public static class Keyboard
 {
-    public static ReplyKeyboardMarkup Register =
-    new ReplyKeyboardMarkup(new List<KeyboardButton>()
+    public static InlineKeyboardMarkup Register = new(new[]
         {
-            new KeyboardButton("/register"),
-        })
-    {
-        ResizeKeyboard = true,
-    };
+            new []
+            {
+                InlineKeyboardButton.WithCallbackData(text: "Регистрация", callbackData: "/register"),
+            },
+        });
     public static InlineKeyboardMarkup DichotomousSurvey = new(new[]
         {
             new []

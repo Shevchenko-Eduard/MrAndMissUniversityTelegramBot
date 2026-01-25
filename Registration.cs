@@ -5,6 +5,17 @@ using MrAndMissUniversity.Keyboards;
 
 namespace MrAndMissUniversity;
 
+public class Output
+{
+    public static async Task TextMessage(
+            ITelegramBotClient botClient, long chatId, string message)
+    {
+        await botClient.SendMessage(
+            chatId,
+            message);
+    }
+}
+
 public class Registration
 {
     public static async Task PleaseTryAgain(ITelegramBotClient botClient, Chat chat)
@@ -71,44 +82,67 @@ public class Registration
     public static async Task RegistrationContinua(
         ITelegramBotClient botClient, Chat chat, short step)
     {
-        await botClient.SendMessage(
-            chat.Id,
-            "Продолжите регистрацию.");
+        await RegistrationContinua(botClient, chat.Id, step);
+    }
+    public static async Task RegistrationContinua(
+        ITelegramBotClient botClient, long chatId, short step)
+    {
         switch (step)
         {
             case 1:
                 {
-                    await Step0.Message(botClient, chat);
+                    await botClient.SendMessage(
+                        chatId,
+                        "Продолжите регистрацию.");
+                    await Step0.Message(botClient, chatId);
                     return;
                 }
             case 2:
                 {
-                    await Step1.Message(botClient, chat);
+                    await botClient.SendMessage(
+                        chatId,
+                        "Продолжите регистрацию.");
+                    await Step1.Message(botClient, chatId);
                     return;
                 }
             case 3:
                 {
-                    await Step2.Message(botClient, chat);
+                    await botClient.SendMessage(
+                        chatId,
+                        "Продолжите регистрацию.");
+                    await Step2.Message(botClient, chatId);
                     return;
                 }
             case 4:
                 {
-                    await Step3.Message(botClient, chat);
+                    await botClient.SendMessage(
+                        chatId,
+                        "Продолжите регистрацию.");
+                    await Step3.Message(botClient, chatId);
                     return;
                 }
             case 5:
                 {
-                    await Step4.Message(botClient, chat);
+                    await botClient.SendMessage(
+                        chatId,
+                        "Продолжите регистрацию.");
+                    await Step4.Message(botClient, chatId);
                     return;
                 }
             case 6:
                 {
-                    await Step5.Message(botClient, chat);
+                    await botClient.SendMessage(
+                        chatId,
+                        "Продолжите регистрацию.");
+                    await Step5.Message(botClient, chatId);
                     return;
                 }
             case 7:
                 {
-                    await Step6.Message(botClient, chat);
+                    await botClient.SendMessage(
+                        chatId,
+                        "Продолжите регистрацию.");
+                    await Step6.Message(botClient, chatId);
                     return;
                 }
             case -1:
@@ -135,8 +169,13 @@ public class Registration
         public static async Task Message(
             ITelegramBotClient botClient, Chat chat)
         {
+            await Message(botClient, chat.Id);
+        }
+        public static async Task Message(
+            ITelegramBotClient botClient, long chatId)
+        {
             await botClient.SendMessage(
-                chat.Id,
+                chatId,
                 "Введите ваше полное ФИО:");
         }
         public static async Task Done(
@@ -153,6 +192,20 @@ public class Registration
                 await RegistrationContinua(botClient, chat, step);
             }
         }
+        public static async Task Done(
+            ITelegramBotClient botClient, long chatId, long userId)
+        {
+            short step = await DataBaseMethods.GetRegistrationStep(userId);
+            if (step == 0)
+            {
+                await DataBaseMethods.UpdateRegistrationStep(chatId, 1);
+                await Message(botClient, chatId);
+            }
+            else
+            {
+                await RegistrationContinua(botClient, chatId, step);
+            }
+        }
     }
     public class Step1
     {
@@ -160,8 +213,13 @@ public class Registration
         public static async Task Message(
             ITelegramBotClient botClient, Chat chat)
         {
+            await Message(botClient, chat.Id);
+        }
+        public static async Task Message(
+            ITelegramBotClient botClient, long chatId)
+        {
             await botClient.SendMessage(
-                chat.Id,
+                chatId,
                 "Введите курс и группу(Пример: 3 3831.9):");
         }
         public static async Task Done(
@@ -190,8 +248,13 @@ public class Registration
         public static async Task Message(
             ITelegramBotClient botClient, Chat chat)
         {
+            await Message(botClient, chat.Id);
+        }
+        public static async Task Message(
+            ITelegramBotClient botClient, long chatId)
+        {
             await botClient.SendMessage(
-                chat.Id,
+                chatId,
                 "Введите название специальности:");
         }
         public static async Task Done(
@@ -219,8 +282,13 @@ public class Registration
         public static async Task Message(
             ITelegramBotClient botClient, Chat chat)
         {
+            await Message(botClient, chat.Id);
+        }
+        public static async Task Message(
+            ITelegramBotClient botClient, long chatId)
+        {
             await botClient.SendMessage(
-                chat.Id,
+                chatId,
                 "Отправьте фотографию:");
         }
         public static async Task Done(
@@ -246,8 +314,13 @@ public class Registration
         public static async Task Message(
             ITelegramBotClient botClient, Chat chat)
         {
+            await Message(botClient, chat.Id);
+        }
+        public static async Task Message(
+            ITelegramBotClient botClient, long chatId)
+        {
             await botClient.SendMessage(
-                chat.Id,
+                chatId,
                 "Хотите ли вы добавить информацию о себе?",
                 replyMarkup: Keyboard.DichotomousSurvey);
         }
