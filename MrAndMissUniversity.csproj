@@ -1,6 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Authors>Shevchenko Eduard Stanislavovich</Authors>
+    <PackageVersion>1.0.0.0</PackageVersion>
+    <Title>Mr. And Miss University telegram bot</Title>
+    <PackageProjectUrl>
+      https://github.com/Shevchenko-Eduard/MrAndMissUniversityTelegramBot
+    </PackageProjectUrl>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
