@@ -7,26 +7,48 @@ using MrAndMissUniversity.DbUtils;
 using static System.Console;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MrAndMissUniversityTelegramBot;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Telegram.Bot.Types.Payments;
 
 namespace MrAndMissUniversity;
 
 public static class Handler
 {
     static string pathToStartMessage = Path.Combine(Environment.CurrentDirectory, "StartMessage");
-    static string startMessage = File.ReadAllText(pathToStartMessage);
+    static Task<string> startMessage = ReadAllFile("StartMessage");
+    public static async Task<List<int>> GetMessagesId(long IdUser, int actualMessagesId)
+    {
+        int startId = await DataBaseMethods.GetDeleteMessage(IdUser);
+        List<int> messagesId = [startId];
+        int difference = startId - actualMessagesId;
+        for (int i = 0; i <= difference; ++i)
+        {
+            messagesId.Add(startId + 1);
+        }
+        return messagesId;
+    }
+    public async static Task<string> ReadAllFile(params string[] path)
+    {
+        return File.ReadAllText(Path.Combine(
+            Environment.CurrentDirectory, string.Join(
+                Path.DirectorySeparatorChar, path)));
+    }
     static JsonSerializerOptions optionsJsonSerialize = new()
     {
         WriteIndented = true,  // Включаем красивое форматирование
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull  // Игнорируем null значения
     };
 
-    public static async Task<Task> ErrorHandlerAsync(ITelegramBotClient client, Exception exception, HandleErrorSource source, CancellationToken token)
+    public static async Task<Task> ErrorHandlerAsync(
+        ITelegramBotClient client, Exception exception, HandleErrorSource source, CancellationToken token)
     {
         WriteLine(JsonSerializer.Serialize(exception, optionsJsonSerialize));
         return Task.CompletedTask;
     }
 
-    public static async Task UpdateHandlerAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    public static async Task UpdateHandlerAsync(
+        ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         try
         {
@@ -61,37 +83,53 @@ public static class Handler
                                             {
                                                 if (!await DataBaseMethods.ExistUser(user.Id))
                                                 {
-                                                    await DataBaseMethods.InitUser(user.Id);
                                                     await botClient.SendMessage(
-                                                    chat.Id,
-                                                    startMessage,
-                                                    replyMarkup: Keyboard.Register);
+                                                        chat.Id,
+                                                        await startMessage,
+                                                        replyMarkup: Keyboard.Register);
+                                                    await DataBaseMethods.InitUser(user.Id);
+                                                    await botClient.DeleteMessage(chat.Id, message.Id);
                                                     return;
                                                 }
                                                 else if (await DataBaseMethods.IsRegistrationComplete(user.Id))
                                                 {
-                                                    await botClient.SendMessage(
-                                                    chat.Id,
-                                                    "Вы уже заполнили анкету.");
+                                                    await Survey.SendMessage(botClient, chat, user);
+                                                    await botClient.DeleteMessage(chat.Id, message.Id);
                                                     return;
                                                 }
                                                 else
                                                 {
-                                                    await botClient.SendMessage(
-                                                    chat.Id,
-                                                    startMessage,
-                                                    replyMarkup: Keyboard.Register);
+                                                    // await botClient.SendMessage(
+                                                    // chat.Id,
+                                                    // await startMessage,
+                                                    // replyMarkup: Keyboard.Register);
                                                     await Registration.RegistrationContinua(botClient, chat, user);
+                                                    await botClient.DeleteMessage(chat.Id, message.Id);
                                                     return;
                                                 }
                                             }
                                         default:
                                             {
-                                                short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
-                                                if (!string.IsNullOrEmpty(message.Text))
+                                                Student? student = await DataBaseMethods.GetUser(user.Id);
+                                                if (student is null || string.IsNullOrEmpty(message.Text))
+                                                {
+                                                    return;
+                                                }
+                                                if (student.RegistrationStep != -1)
                                                 {
                                                     await Registration.RegistrationProcess(
-                                                        RegistrationStep, botClient, chat, user, message);
+                                                        RegistrationStep: student.RegistrationStep,
+                                                        botClient: botClient, chatId:
+                                                        chat.Id, userId: user.Id, message: message);
+                                                }
+                                                if (student.EditColumn != -1)
+                                                {
+                                                    await Survey.EditProcess(
+                                                        editColumn: student.EditColumn,
+                                                        botClient: botClient,
+                                                        chatId: chat.Id,
+                                                        userId: user.Id,
+                                                        message: message);
                                                 }
                                                 return;
                                             }
@@ -99,7 +137,8 @@ public static class Handler
                                 }
                             case MessageType.Photo:
                                 {
-                                    if (message.Photo is null)
+                                    Student? student = await DataBaseMethods.GetUser(user.Id);
+                                    if (student is null || message.Photo is null)
                                     {
                                         return;
                                     }
@@ -123,10 +162,26 @@ public static class Handler
                                         imageBytes = await httpClient.GetByteArrayAsync(url);
                                         // imageBytes содержит байты изображения
                                     }
-                                    short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
-                                    if (RegistrationStep == 4)
+
+                                    if (student.RegistrationStep == 4)
                                     {
-                                        await Registration.Step4.Done(botClient, chat, user, photo, imageBytes);
+                                        await Registration.RegistrationProcess(
+                                            RegistrationStep: student.RegistrationStep,
+                                            botClient: botClient, chatId:
+                                            chat.Id, userId: user.Id,
+                                            photo: photo, imageBytes: imageBytes, 
+                                            message: message);
+                                    }
+                                    if (student.EditColumn != -1)
+                                    {
+                                        await Survey.EditProcess(
+                                            editColumn: student.EditColumn,
+                                            botClient: botClient,
+                                            userId: user.Id,
+                                            chatId: user.Id,
+                                            photo: photo,
+                                            imageBytes: imageBytes,
+                                            message: message);
                                     }
                                     return;
                                 }
@@ -140,11 +195,22 @@ public static class Handler
                         {
                             return;
                         }
-                        User? user = callbackQuery.From;
-                        if (user is null)
+                        Message? message = callbackQuery.Message;
+                        if (message is null)
                         {
                             return;
                         }
+                        Chat? chat = message.Chat;
+                        User? user = callbackQuery.From;
+                        if (user is null || chat is null)
+                        {
+                            return;
+                        }
+                        await botClient.AnswerCallbackQuery(
+                            callbackQueryId: callbackQuery.Id,
+                            text: null, // Можно передать текст для всплывающего уведомления
+                            showAlert: false,
+                            cancellationToken: cancellationToken);
                         switch (callbackQuery.Data)
                         {
                             case "/yes":
@@ -152,8 +218,9 @@ public static class Handler
                                     short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
                                     if (RegistrationStep == 5)
                                     {
-                                        await Registration.Step5.Done(botClient, user.Id, user.Id);
+                                        await Registration.Step5.Done(botClient, chat.Id, user.Id);
                                     }
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
                                     return;
                                 }
                             case "/no":
@@ -161,13 +228,73 @@ public static class Handler
                                     short RegistrationStep = await DataBaseMethods.GetRegistrationStep(user.Id);
                                     if (RegistrationStep == 5)
                                     {
-                                        await Registration.Step6.Skip(botClient, user.Id, user.Id);
+                                        await Registration.Step6.Skip(botClient, chat.Id, user.Id);
                                     }
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
                                     return;
                                 }
                             case "/register":
                                 {
-                                    await Registration.Step0.Done(botClient, user.Id, user.Id);
+                                    await Registration.Step0.Done(botClient, chat.Id, user.Id);
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
+                                    return;
+                                }
+                            case "/edit":
+                                {
+                                    await botClient.SendMessage(
+                                        chat.Id,
+                                        "Что вы хотите отредактировать?",
+                                        replyMarkup: Keyboard.EditProfile
+                                    );
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
+                                    return;
+                                }
+                            case "/editFullName":
+                                {
+                                    await Registration.Step0.Message(botClient, chat.Id);
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
+                                    await DataBaseMethods.UpdateDeleteMessage(user.Id, message.Id + 1);
+                                    await DataBaseMethods.UpdateEditColumn(user.Id, 1);
+                                    return;
+                                }
+                            case "/editYearAndGroup":
+                                {
+                                    await Registration.Step1.Message(botClient, chat.Id);
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
+                                    await DataBaseMethods.UpdateDeleteMessage(user.Id, message.Id + 1);
+                                    await DataBaseMethods.UpdateEditColumn(user.Id, 2);
+                                    return;
+                                }
+                            case "/editNameOfSpecialty":
+                                {
+                                    await Registration.Step2.Message(botClient, chat.Id);
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
+                                    await DataBaseMethods.UpdateDeleteMessage(user.Id, message.Id + 1);
+                                    await DataBaseMethods.UpdateEditColumn(user.Id, 3);
+                                    return;
+                                }
+                            case "/editPhotograph":
+                                {
+                                    await Registration.Step3.Message(botClient, chat.Id);
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
+                                    await DataBaseMethods.UpdateDeleteMessage(user.Id, message.Id + 1);
+                                    await DataBaseMethods.UpdateEditColumn(user.Id, 4);
+                                    return;
+                                }
+                            case "/editBriefIntroduction":
+                                {
+                                    await Registration.Step5.Message(botClient, chat.Id);
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
+                                    await DataBaseMethods.UpdateDeleteMessage(user.Id, message.Id + 1);
+                                    await DataBaseMethods.UpdateEditColumn(user.Id, 5);
+                                    return;
+                                }
+                            case "/editReason":
+                                {
+                                    await Registration.Step6.Message(botClient, chat.Id);
+                                    await botClient.DeleteMessage(chat.Id, message.Id);
+                                    await DataBaseMethods.UpdateDeleteMessage(user.Id, message.Id + 1);
+                                    await DataBaseMethods.UpdateEditColumn(user.Id, 6);
                                     return;
                                 }
                         }

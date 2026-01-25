@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace MrAndMissUniversity.DbUtils;
@@ -21,5 +22,10 @@ public class Student
     public Byte[]? Photograph { get; set; } // фотография                       4
     public string? BriefIntroduction { get; set; } // Рассказ о себе            5
     public string? Reason { get; set; } // Причина участия                      6
+    [DefaultValue(0)]
     public short RegistrationStep { get; set; } // Шаг регистрации 
+    [DefaultValue(-1)]
+    public short EditColumn { get; set; } // Какая колонка редактируется
+    [DefaultValue(1)]
+    public int StartDeleteMessage { get; set; } // Какая колонка редактируется
 }

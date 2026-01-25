@@ -3,6 +3,8 @@ using Telegram.Bot.Polling;
 using static System.Console;
 using MrAndMissUniversity.DbUtils;
 using Microsoft.EntityFrameworkCore;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace MrAndMissUniversity;
 

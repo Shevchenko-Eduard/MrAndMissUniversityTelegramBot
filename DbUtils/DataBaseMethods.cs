@@ -16,7 +16,6 @@ namespace MrAndMissUniversity.DbUtils
                 Student student = new()
                 {
                     TelegramId = Id,
-                    RegistrationStep = 0,
                 };
                 await db.Students.AddAsync(student);
                 await db.SaveChangesAsync();
@@ -38,6 +37,20 @@ namespace MrAndMissUniversity.DbUtils
                     return null;
                 }
                 return student;
+            }
+        }
+        public static async Task<Byte[]> GetPhotograph(
+            long Id)
+        {
+            using (DataBase db = new())
+            {
+                Student? student = await db.Students
+                    .FirstOrDefaultAsync(s => s.TelegramId == Id);
+                if (student is null || student.Photograph is null)
+                {
+                    throw new Exception();
+                }
+                return student.Photograph;
             }
         }
         /// <summary>
@@ -67,6 +80,36 @@ namespace MrAndMissUniversity.DbUtils
                 await db.SaveChangesAsync();
             }
         }
+        public static async Task UpdateDeleteMessage(long Id, int InputId)
+        {
+            using (DataBase db = new())
+            {
+                Student? student = await db.Students
+                    .FirstOrDefaultAsync(s => s.TelegramId == Id);
+                if (student is null)
+                {
+                    throw new Exception();
+                }
+                student.StartDeleteMessage = InputId;
+                db.Students.Update(student);
+                await db.SaveChangesAsync();
+            }
+        }
+        public static async Task UpdateEditColumn(long Id, short NumberColumn)
+        {
+            using (DataBase db = new())
+            {
+                Student? student = await db.Students
+                    .FirstOrDefaultAsync(s => s.TelegramId == Id);
+                if (student is null)
+                {
+                    throw new Exception();
+                }
+                student.EditColumn = NumberColumn;
+                db.Students.Update(student);
+                await db.SaveChangesAsync();
+            }
+        }
         public static async Task<short> GetRegistrationStep(long Id)
         {
             using (DataBase db = new())
@@ -79,6 +122,34 @@ namespace MrAndMissUniversity.DbUtils
                     return 0;
                 }
                 return student.RegistrationStep;
+            }
+        }
+        public static async Task<int> GetDeleteMessage(long Id)
+        {
+            using (DataBase db = new())
+            {
+                Student? student = await db.Students
+                    .FirstOrDefaultAsync(s => s.TelegramId == Id);
+                if (student is null)
+                {
+                    await InitUser(Id);
+                    return 0;
+                }
+                return student.StartDeleteMessage;
+            }
+        }
+        public static async Task<short> GetEditColumn(long Id)
+        {
+            using (DataBase db = new())
+            {
+                Student? student = await db.Students
+                    .FirstOrDefaultAsync(s => s.TelegramId == Id);
+                if (student is null)
+                {
+                    await InitUser(Id);
+                    return 0;
+                }
+                return student.EditColumn;
             }
         }
         public static async Task<bool> IsRegistrationComplete(long Id)
@@ -176,24 +247,6 @@ namespace MrAndMissUniversity.DbUtils
                 student.Photograph = photograph;
                 db.Students.Update(student);
                 await db.SaveChangesAsync();
-            }
-        }
-        public static async Task<Byte[]> GetPhotograph(
-            long Id)
-        {
-            using (DataBase db = new())
-            {
-                Student? student = await db.Students
-                    .FirstOrDefaultAsync(s => s.TelegramId == Id);
-                if (student is null)
-                {
-                    throw new Exception();
-                }
-                if (student.Photograph is null)
-                {
-                    throw new Exception();
-                }
-                return student.Photograph;
             }
         }
         public static async Task UpdateBriefIntroduction(
