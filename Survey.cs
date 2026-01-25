@@ -8,7 +8,6 @@ namespace MrAndMissUniversityTelegramBot;
 
 public static class Survey
 {
-    
     public static async Task SendMessage(ITelegramBotClient botClient, Chat chat, User user)
     {
         await SendMessage(botClient, chat.Id, user.Id);
@@ -20,7 +19,8 @@ public static class Survey
         {
             return;
         }
-        string survey = await Handler.ReadAllFile("Survey");
+        
+        string survey = await Handler.ReadAllFile("Text" ,"Survey");
         using (Stream stream = new MemoryStream(student.Photograph))
         {
             await botClient.SendPhoto(

@@ -10,12 +10,19 @@ namespace MrAndMissUniversity;
 
 class Program
 {
-    public static string Token = "8362813400:AAEVyEL1jB3j_-Y0cWVs277jnx1OKtP4Gac";
+    public static string ReadAllFile(params string[] path)
+    {
+        return File.ReadAllText(Path.Combine(
+            Environment.CurrentDirectory, string.Join(
+                Path.DirectorySeparatorChar, path)));
+    }
+    public static string Token = ReadAllFile("Text", "Token");
     // Это клиент для работы с Telegram Bot API, который позволяет отправлять сообщения, управлять ботом, подписываться на обновления и многое другое.
-    private static ITelegramBotClient bot = new TelegramBotClient(Token);
+    private static ITelegramBotClient? bot;
     static async Task Main()
     {
-        WriteLine("Запущен бот " + bot.GetMe().Result.FirstName);
+        bot = new TelegramBotClient(Token);
+        Directory.CreateDirectory(DataBase.DataBaseDirectory);
         using (DataBase db = new())
         {
             try
@@ -41,6 +48,7 @@ class Program
             receiverOptions,
             cancellationToken
         );
+        WriteLine("Запущен бот " + bot.GetMe().Result.FirstName);
         ReadLine();
     }
 }

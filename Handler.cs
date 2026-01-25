@@ -15,8 +15,7 @@ namespace MrAndMissUniversity;
 
 public static class Handler
 {
-    static string pathToStartMessage = Path.Combine(Environment.CurrentDirectory, "StartMessage");
-    static Task<string> startMessage = ReadAllFile("StartMessage");
+    static Task<string> startMessage = ReadAllFile("Text", "StartMessage");
     public static async Task<List<int>> GetMessagesId(long IdUser, int actualMessagesId)
     {
         int startId = await DataBaseMethods.GetDeleteMessage(IdUser);

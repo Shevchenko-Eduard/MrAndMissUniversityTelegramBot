@@ -18,10 +18,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="StartMessage">
+    <Content Include="Text/StartMessage">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Survey">
+    <Content Include="Text/Survey">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Text/Token">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
